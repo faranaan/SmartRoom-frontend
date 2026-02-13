@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import { useAuth } from './context/AuthContext';
 import type { ReactNode } from "react";
 import Register from "./pages/Register";
+import Layout from "./components/Layout";
+import Rooms from "./pages/Rooms";
 
 const Dashboard = () => {
   const { logout, user } = useAuth();
@@ -27,14 +29,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Navigate to="/login" />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/rooms" element={<Rooms />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
