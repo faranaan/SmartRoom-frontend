@@ -5,36 +5,44 @@ import type { ReactNode } from "react";
 import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import Rooms from "./pages/Rooms";
+import LandingPage from "./pages/LandingPage";
+import Dashboard from "./pages/Dashboard";
+import StudentLayout from "./components/StudentLayout";
+import RoomCatalog from "./pages/student/RoomCatalog";
 
-const Dashboard = () => {
-  const { logout, user } = useAuth();
-  return (
-    <div className="p-10 text-center">
-      <h1 className="text-2xl font-bold mb-4">Welcome, {user?.unique_name}!</h1>
-      <p className="mb-6">You are logged in as <span className="font-bold text-blue-600">{user?.role}</span></p>
-      <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
-    </div>
-  );
-};
+const ProtectedRoute = ({ children, allowedRoles }: { children: ReactNode, allowedRoles?: string[]}) => {
+  const { isAuthenticated, user, isLoading } = useAuth();
+  
+  if(isLoading) return null;
 
-const ProtectedRoute = ({ children }: { children: ReactNode}) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace/>;
+  if(!isAuthenticated) return <Navigate to="/login" replace />
+
+  if(allowedRoles && !allowedRoles.includes(user?.role || "")){
+    console.warn("Redirecting due to role mismatch");
+    return <Navigate to={user?.role === 'Admin' ? '/dashboard' : '/browse'} />
+  }
+
+  return children;
 };
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route element={<ProtectedRoute allowedRoles={["Admin"]}><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/rooms" element={<Rooms />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["Mahasiswa", "Dosen"]}><StudentLayout /></ProtectedRoute>}>
+          <Route path="/browse" element={<RoomCatalog />} />
+          <Route path="/my-bookings" element={<div className="p-10"> History Page Coming Soon</div>} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;

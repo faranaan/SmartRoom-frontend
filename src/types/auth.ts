@@ -5,6 +5,7 @@ export interface User {
     exp: number;
     unique_name?: string;
     role: string;
+    id?: number;
 }
 
 export interface AuthContextType {
@@ -13,4 +14,5 @@ export interface AuthContextType {
     login: (token: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
+    isLoading: boolean;
 }

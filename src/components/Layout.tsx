@@ -8,8 +8,11 @@ const Layout = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        logout();
-        navigate('/login');
+        navigate('/', { replace: true});
+
+        setTimeout(() => {
+            logout();
+        }, 10);
     };
 
     const menus = [
@@ -19,12 +22,12 @@ const Layout = () => {
             icon: LayoutDashboard
         },
         {
-            name:'Ruangan',
+            name:'Rooms',
             path: '/rooms',
             icon: Building2
         },
         {
-            name:'Peminjaman',
+            name:'Bookings',
             path: '/bookings',
             icon: CalendarDays
         },

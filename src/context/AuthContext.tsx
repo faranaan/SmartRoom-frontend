@@ -4,9 +4,18 @@ import { type User, type AuthContextType } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const mapUser = (decoded: any): User => {
+    return {
+        ...decoded,
+        role: decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"],
+        unique_name: decoded.unique_name || decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]
+    };
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
@@ -18,19 +27,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     logout();
                 } else {
                     setToken(storedToken);
-                    setUser(decoded);
+                    setUser(mapUser(decoded));
                 }
             } catch (error) {
                 logout();
             }
         }
+        setIsLoading(false);
     }, []);
 
     const login = (newToken: string) => {
         localStorage.setItem('token', newToken);
         const decoded: User = jwtDecode(newToken);
         setToken(newToken);
-        setUser(decoded);   
+        setUser(mapUser(decoded));   
     };
 
     const logout = () => {
@@ -40,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

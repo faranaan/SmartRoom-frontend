@@ -4,6 +4,7 @@ import type { Room } from "../types/room";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import RoomModal from "../components/RoomModal";
 import RoomDetailModal from "../components/RoomDetailModal";
+import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
 const Rooms = () => {
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -12,6 +13,9 @@ const Rooms = () => {
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [detailRoom, setDetailRoom] = useState<Room | null>(null);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         fetchRooms();
@@ -44,15 +48,9 @@ const Rooms = () => {
         setIsDetailOpen(true);
     }
 
-    const handleDelete = async (id: number) => {
-        if (window.confirm('Are you sure ypu want to delete this room? This action cannot be undone.')){
-            try {
-                await api.delete(`/Rooms/${id}`)
-                fetchRooms();
-            } catch (error) {
-                alert('Failed to delete room. Please ensure there are no active bookings')
-            }
-        }
+    const handleDeleteClick = (room: Room) => {
+        setRoomToDelete(room);
+        setIsDeleteOpen(true);
     };
 
     const getRoomTypeName = (type: string) => {
@@ -73,6 +71,22 @@ const Rooms = () => {
             default: return building;
         }
     };
+
+    const confirmDelete = async () => {
+        if (!roomToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await api.delete(`/Rooms/${roomToDelete.id}`);
+            setIsDeleteOpen(false);
+            fetchRooms();
+        } catch (error) {
+            alert('Failed to delete room. Please ensure there are no active bookings');
+        } finally {
+            setIsDeleting(false);
+            setRoomToDelete(null);
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -146,7 +160,7 @@ const Rooms = () => {
                                             <Pencil size={18} />
                                         </button>
                                         <button 
-                                        onClick={() => handleDelete(room.id)}
+                                        onClick={() => handleDeleteClick(room)}
                                             className="text-red-500 hover:text-red-700 p-1 transition" 
                                             title="Delete"
                                         >
@@ -169,6 +183,13 @@ const Rooms = () => {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 room={detailRoom}
+            />
+            <DeleteConfirmationModal
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                onConfirm={confirmDelete}
+                roomName={roomToDelete?.roomName || ""}
+                isLoading={isDeleting}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import { X, Calendar, User, Clock } from "lucide-react";
+import { X, Calendar } from "lucide-react";
 import type { Room } from "../types/room";
 
 interface RoomDetailModalProps {

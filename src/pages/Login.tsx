@@ -4,6 +4,7 @@ import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Lock, User, LogIn, AlertCircle } from 'lucide-react';
 import { Link } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -33,7 +34,14 @@ const Login = () => {
 
             login(token);
 
-            navigate('/dashboard');
+            const decoded: any = jwtDecode(token);
+            const role = decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+            if (role === 'Admin') {
+                navigate('/dashboard');
+            } else {
+                navigate('/browse');
+            }
         } catch (err: any) {
             setError(err.response?.data || 'Login failed. Please try again.');
         } finally {
