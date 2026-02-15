@@ -3,7 +3,7 @@ import { api } from "../../api/axios";
 import type { Room } from "../../types/room";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import RoomModal from "../../components/RoomModal";
-import RoomDetailModal from "../../components/RoomDetailModal";
+import RoomAuditModal from "../../components/RoomAuditModal";
 import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
 import toast from "react-hot-toast";
 
@@ -12,8 +12,8 @@ const Rooms = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [detailRoom, setDetailRoom] = useState<Room | null>(null);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [auditRoom, setAuditRoom] = useState<Room | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,9 +44,9 @@ const Rooms = () => {
     setIsFormOpen(true);
   };
 
-  const handleDetail = (room: Room) => {
-    setDetailRoom(room);
-    setIsDetailOpen(true);
+  const handleAudit = (room: Room) => {
+    setAuditRoom(room);
+    setIsAuditOpen(true);
   };
 
   const handleDeleteClick = (room: Room) => {
@@ -175,9 +175,9 @@ const Rooms = () => {
                   </td>
                   <td className="p-4 text-center space-x-2">
                     <button
-                      onClick={() => handleDetail(room)}
+                      onClick={() => handleAudit(room)}
                       className="text-blue-600 hover:text-blue-800 p-1 transition"
-                      title="Details"
+                      title="Room Audit Logs"
                     >
                       <Search size={18} />
                     </button>
@@ -208,10 +208,11 @@ const Rooms = () => {
         onSuccess={fetchRooms}
         roomToEdit={selectedRoom}
       />
-      <RoomDetailModal
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        room={detailRoom}
+      <RoomAuditModal
+        isOpen={isAuditOpen}
+        onClose={() => setIsAuditOpen(false)}
+        roomId={auditRoom?.id}
+        roomName={auditRoom?.roomName}
       />
       <DeleteConfirmationModal
         isOpen={isDeleteOpen}
