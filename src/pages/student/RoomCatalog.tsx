@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/axios";
 import type { Room } from "../../types/room";
-import { Users, MapPin, LayoutTemplate, Search, CalendarCheck, Info } from "lucide-react";
+import { Users, MapPin, LayoutTemplate, Search, CalendarCheck, Info, ArrowUpDown, Filter } from "lucide-react";
 import BookingModal from "../../components/BookingModal";
 import SuccessModal from "../../components/SuccessModal";
 import RoomScheduleModal from "../../components/RoomScheduleModal";
@@ -13,6 +13,10 @@ const RoomCatalog = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSuccessOpen, setIsSuccessOpen] = useState(false);
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState('All');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     useEffect(() => {
         fetchRooms();
@@ -30,7 +34,6 @@ const RoomCatalog = () => {
         }
     };
 
-    // Helper functions placed inside the component to avoid scope errors
     const getRoomTypeName = (type: string) => {
         switch (type) {
             case "Classroom": return "Classroom";
@@ -64,36 +67,76 @@ const RoomCatalog = () => {
         setIsSuccessOpen(true);
     };
 
+    const filteredRooms = rooms
+        .filter((room) => {
+            const matchesSearch = room.roomName.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesType = filterType === 'All' || room.type === filterType;
+            return matchesSearch && matchesType;
+        })
+        .sort((a, b) => {
+            if (sortOrder === 'asc') return a.capacity - b.capacity;
+            return b.capacity - a.capacity;
+        });
+
+    const roomTypes = ['All', ...new Set(rooms.map(r => r.type))];
+
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Room Catalog</h1>
                     <p className="text-gray-500 mt-1">Select a room that suits your activity needs.</p>
                 </div>
-                <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Search rooms..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 outline-none transition focus:border-blue-500"    
-                    />
+                <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+                    <div className="relative group flex-1 md:flex-none">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search rooms..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition w-full md:w-64" 
+                        />
+                    </div>
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <select 
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 appearance-none cursor-pointer"
+                        >
+                            {roomTypes.map(type => (
+                                <option key={type} value={type}>{type === 'All' ? 'All Types' : getRoomTypeName(type)}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button 
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-gray-600 font-medium"
+                    >
+                        <ArrowUpDown size={18} />
+                        <span className="hidden sm:inline">Capacity: {sortOrder === 'asc' ? 'Low to High' : 'High to Low'}</span>
+                    </button>
                 </div>
             </div>
-
             {isLoading ? (
                 <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 </div>
-            ) : rooms.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <p className="text-gray-500 text-lg">No rooms available at the moment.</p>
+            ) : filteredRooms.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                    <p className="text-gray-500 text-lg">No rooms found matching your filters.</p>
+                    <button 
+                        onClick={() => { setSearchTerm(''); setFilterType('All'); }}
+                        className="mt-4 text-blue-600 hover:underline"
+                    >
+                        Reset Filters
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {rooms.map((room) => (
+                    {filteredRooms.map((room) => (
                         <div key={room.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group flex flex-col">
-                            {/* Card Header/Image placeholder */}
                             <div className="h-40 bg-gradient-to-r from-blue-500 to-cyan-500 relative flex items-center justify-center">
                                 <LayoutTemplate className="text-white/30 w-20 h-20" />
                                 <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
@@ -102,8 +145,6 @@ const RoomCatalog = () => {
                                     {room.isAvailable ? 'Available' : 'Occupied'}
                                 </span>
                             </div>
-
-                            {/* Card Body */}
                             <div className="p-5 flex-1 flex flex-col">
                                 <h3 className="font-bold text-xl text-gray-900 mb-1 group-hover:text-blue-600 transition">
                                     {room.roomName}
@@ -122,20 +163,17 @@ const RoomCatalog = () => {
                                         <span>Capacity: {room.capacity} People</span>
                                     </div>
                                 </div>
-
-                                {/* Action Buttons */}
                                 <div className="mt-auto flex gap-3">
                                     <button
                                         onClick={() => handleOpenSchedule(room)}
-                                        className="flex-1 py-2.5 rounded-lg font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition flex items-center justify-center gap-2 border border-blue-100"
+                                        className="flex-1 bg-blue-50 text-blue-600 py-2.5 rounded-lg hover:bg-blue-100 transition font-semibold flex items-center justify-center gap-2"
                                     >
                                         <Info size={18} /> Schedule
                                     </button>
-
                                     <button
                                         disabled={!room.isAvailable}
                                         onClick={() => handleOpenBooking(room)}
-                                        className={`flex-1 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition ${
+                                        className={`flex-1 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
                                             room.isAvailable
                                             ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
@@ -153,8 +191,6 @@ const RoomCatalog = () => {
                     ))}
                 </div>
             )}
-
-            {/* Modals Container */}
             <RoomScheduleModal 
                 isOpen={isScheduleOpen}
                 onClose={() => {
@@ -163,14 +199,12 @@ const RoomCatalog = () => {
                 }}
                 room={selectedRoom}
             />
-
             <BookingModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 room={selectedRoom}
                 onSuccess={handleBookingSucces}
             />
-            
             <SuccessModal
                 isOpen={isSuccessOpen}
                 onClose={() => setIsSuccessOpen(false)}

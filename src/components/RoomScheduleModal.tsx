@@ -93,8 +93,6 @@ const RoomScheduleModal = ({ isOpen, onClose, room }: RoomScheduleModalProps) =>
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-                
-                {/* Header */}
                 <div className={`p-6 text-white flex justify-between items-start shrink-0 ${room.isAvailable ? 'bg-blue-600' : 'bg-orange-500'}`}>
                     <div>
                         <h2 className="font-bold text-2xl">{room.roomName}</h2>
@@ -109,8 +107,6 @@ const RoomScheduleModal = ({ isOpen, onClose, room }: RoomScheduleModalProps) =>
                         <X size={20} />
                     </button>
                 </div>
-
-                {/* Body */}
                 <div className="p-6 overflow-y-auto bg-gray-50 flex-1">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Calendar className="text-blue-600" /> Room Usage Schedule
@@ -179,8 +175,6 @@ const RoomScheduleModal = ({ isOpen, onClose, room }: RoomScheduleModalProps) =>
                         </table>
                     </div>
                 </div>
-
-                {/* Footer */}
                 <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end shrink-0">
                     <button 
                         onClick={onClose} 
