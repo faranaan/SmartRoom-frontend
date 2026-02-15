@@ -3,6 +3,7 @@ import { api } from "../../api/axios";
 import { Calendar, Clock, MapPin, XCircle, Minus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import CancelConfirmationModal from "../../components/CancelConfirmationModal";
+import toast from "react-hot-toast";
 
 interface Booking {
     id: number;
@@ -76,12 +77,12 @@ const MyBookings = () => {
                 status: 3,
                 notes: `Cancelled by ${roleLabel}`
             });
-
+            toast.success("Booking successfully cancelled!.");
             setIsCancelModalOpen(false);
             fetchMyBookings();
         } catch (error) {
-            console.error("Failed to cancel:", error)
-            alert("Failed to cancel booking.");
+            console.error("Failed to cancel:", error);
+            toast.error("Failed to cancel booking.");
         } finally {
             setIsCancelling(false);
         }

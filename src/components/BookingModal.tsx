@@ -3,6 +3,7 @@ import { api } from "../api/axios";
 import { X, Calendar, Clock, FileText, CheckCircle } from "lucide-react";
 import type { Room } from "../types/room";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 interface BookingModalProps {
     isOpen: boolean;
@@ -39,9 +40,18 @@ const BookingModal = ({ isOpen, onClose, room, onSuccess }: BookingModalProps) =
         try {
             const startDateTime = new Date(`${formData.bookingDate}T${formData.startTime}`);
             const endDateTime = new Date(`${formData.bookingDate}T${formData.endTime}`);
+            const now = new Date();
+
+            if (startDateTime < now) {
+                toast.error("Cannot book in the past!");
+                setIsLoading(false);
+                return;
+            }
 
             if (startDateTime >= endDateTime) {
-                throw new Error("End time must be later than start time.");
+                toast.error("End time must be later than start time.");
+                setIsLoading(false);
+                return;
             }
 
             const rawId = user?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
@@ -60,9 +70,12 @@ const BookingModal = ({ isOpen, onClose, room, onSuccess }: BookingModalProps) =
 
             setFormData({ bookingDate: '', startTime: '', endTime: '', purpose: ''});
             onSuccess();
+            toast.success("Booking request sent!");
             onClose();
         } catch (err: any) {
-            setError(err.response?.data || 'Failed to submit booking request.');
+            const backendMessage = err.response?.data || 'Failed to submit booking request.';
+            setError(backendMessage);
+            toast.error(backendMessage);
         } finally {
             setIsLoading(false);
         }

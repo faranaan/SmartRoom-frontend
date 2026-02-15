@@ -18,12 +18,12 @@ const Layout = () => {
     const menus = [
         {
             name:'Dashboard',
-            path: '/dashboard',
+            path: '/admin/dashboard',
             icon: LayoutDashboard
         },
         {
             name:'Rooms',
-            path: '/rooms',
+            path: '/admin/rooms',
             icon: Building2
         },
         {

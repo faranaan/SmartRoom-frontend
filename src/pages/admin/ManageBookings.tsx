@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/axios";
 import { CheckCircle, XCircle, Clock, Search, AlertTriangle } from "lucide-react";
+import toast from "react-hot-toast";
+import ConfirmModal from "../../components/ConfirmModal";
 
 interface Booking {
     id: number;
@@ -25,6 +27,8 @@ const ManageBookings = () => {
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState("");
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [targetId, setTargetId] = useState<number | null>(null);
 
     useEffect(() => {
         fetchBookings();
@@ -41,16 +45,23 @@ const ManageBookings = () => {
         }
     };
 
-    const handleApprove = async (id: number) => {
-        if (!window.confirm("Approve this booking request?")) return;
+    const openApproveConfirm = (id:number) => {
+        setTargetId(id);
+        setIsConfirmOpen(true);
+    }
+
+    const handleApprove = async () => {
+        if (!targetId) return;
+        setIsLoading(true);
 
         try {
-            await api.put(`/Bookings/${id}/status`, { status: 1 });
-            alert("Booking Approved!");
+            await api.put(`/Bookings/${targetId}/status`, { status: 1 });
+            setIsConfirmOpen(false);
+            toast.success("Booking Approved!");
             fetchBookings();
         } catch (error) {
             console.error("Error approving:", error);
-            alert("Failed to approve booking.");
+            toast.error("Failed to approve booking.");
         }
     };
 
@@ -62,7 +73,7 @@ const ManageBookings = () => {
     
     const handleRejectSubmit = async () => {
         if (!selectedBookingId || !rejectReason.trim()) {
-            alert("Please provide a reason for rejection.");
+            toast("Please provide a reason for rejection.");
             return;
         }
 
@@ -72,12 +83,12 @@ const ManageBookings = () => {
                 notes: rejectReason
             });
 
-            alert("Booking Rejected!");
+            toast.success("Booking Rejected!");
             setIsRejectModalOpen(false);
             fetchBookings();
         } catch (error) {
             console.error("Error rejecting:", error);
-            alert("Failed to reject booking.");
+            toast.error("Failed to reject booking.");
         }
     };
 
@@ -131,9 +142,9 @@ const ManageBookings = () => {
                                 <td className="p-4 text-center">{getStatusBadge(item.status)}</td>
                                 <td className="p-4 text-center">
                                     {(item.status === 0 || item.status === "Pending") ? (
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-center gap-2">
                                             <button
-                                                onClick={() => handleApprove(item.id)}
+                                                onClick={() => openApproveConfirm(item.id)}
                                                 className="p-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition"
                                                 title="Approve"
                                             >
@@ -159,6 +170,15 @@ const ManageBookings = () => {
                     <div className="p-8 text-center text-gray-500">No Booking requests found.</div>
                 )}
             </div>
+            <ConfirmModal 
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleApprove}
+                title="Approve Booking?"
+                message="Are you sure you want to approve this request?"
+                confirmText="Yes, Approve"
+                isLoading={isLoading}
+            />
             {isRejectModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-xl shadow-xl w-96 animate-fade-in-up">

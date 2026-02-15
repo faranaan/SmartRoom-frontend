@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { api } from "../api/axios";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Lock, User, LogIn, AlertCircle } from 'lucide-react';
 import { Link } from "react-router-dom";
