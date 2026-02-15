@@ -12,6 +12,7 @@ import StudentLayout from "./components/StudentLayout";
 import RoomCatalog from "./pages/student/RoomCatalog";
 import MyBookings from "./pages/student/MyBookings";
 import ManageBookings from "./pages/admin/ManageBookings";
+import StudentDashboard from "./pages/student/Dashboard";
 
 const ProtectedRoute = ({
   children,
@@ -27,9 +28,8 @@ const ProtectedRoute = ({
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(user?.role || "")) {
-    console.warn("Redirecting due to role mismatch");
     return (
-      <Navigate to={user?.role === "Admin" ? "/admin/dashboard" : "/browse"} />
+      <Navigate to={user?.role === "Admin" ? "/admin/dashboard" : "/student/dashboard"} />
     );
   }
 
@@ -55,6 +55,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
         <Route
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
@@ -70,6 +71,7 @@ function App() {
             element={<Navigate to="/admin/dashboard" replace />}
           />
         </Route>
+
         <Route
           element={
             <ProtectedRoute allowedRoles={["Mahasiswa", "Dosen"]}>
@@ -77,12 +79,10 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route
-            path="/student/dashboard"
-            element={<Navigate to="/browse" replace />}
-          />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/browse" element={<RoomCatalog />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/dashboard" element={<Navigate to="/student/dashboard" replace />}/>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -38,9 +38,9 @@ const Login = () => {
             const role = decoded.role || decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
             if (role === 'Admin') {
-                navigate('/dashboard');
+                navigate('/admin/dashboard');
             } else {
-                navigate('/browse');
+                navigate('/student/dashboard');
             }
         } catch (err: any) {
             setError(err.response?.data || 'Login failed. Please try again.');
