@@ -9,6 +9,8 @@ import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import StudentLayout from "./components/StudentLayout";
 import RoomCatalog from "./pages/student/RoomCatalog";
+import MyBookings from "./pages/student/MyBookings";
+import ManageBookings from "./pages/admin/ManageBookings";
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: ReactNode, allowedRoles?: string[]}) => {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -35,10 +37,12 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["Admin"]}><Layout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/rooms" element={<Rooms />} />
+          <Route path="/admin/bookings" element={<ManageBookings/>}/>
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["Mahasiswa", "Dosen"]}><StudentLayout /></ProtectedRoute>}>
+          <Route path="/student/dashboard" element={<Navigate to="/browse" replace/>} />
           <Route path="/browse" element={<RoomCatalog />} />
-          <Route path="/my-bookings" element={<div className="p-10"> History Page Coming Soon</div>} />
+          <Route path="/my-bookings" element={<MyBookings />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -28,7 +28,7 @@ const Layout = () => {
         },
         {
             name:'Bookings',
-            path: '/bookings',
+            path: '/admin/bookings',
             icon: CalendarDays
         },
     ];
