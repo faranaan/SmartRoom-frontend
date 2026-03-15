@@ -28,32 +28,32 @@ const Dashboard = () => {
 
   const statCards = [
     { 
-      label: 'Total Users', 
+      label: 'Campus Users', 
       value: stats.totalUsers, 
       icon: Users, 
       color: 'bg-blue-500',
-      desc: 'Registered users'
+      desc: 'Users in your campus'
     },
     { 
-      label: 'Total Rooms', 
+      label: 'Campus Rooms', 
       value: stats.totalRooms, 
       icon: CheckCircle, 
       color: 'bg-green-500',
-      desc: 'Ready for use'
+      desc: 'Rooms managed by you'
     },
     { 
       label: 'Pending Requests', 
       value: stats.pendingBookings, 
       icon: Clock, 
       color: 'bg-orange-500',
-      desc: 'Awaiting approval'
+      desc: 'Awaiting your approval'
     },
     { 
       label: 'Today\'s Bookings', 
       value: stats.activeBookingsToday, 
       icon: Calendar, 
       color: 'bg-purple-500',
-      desc: 'Scheduled activities'
+      desc: 'Approved today'
     },
   ];
 
@@ -61,7 +61,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-500">Summary of SmartRoom system activities today.</p>
+        <p className="text-gray-500">Overview of activities for your campus location.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -85,20 +85,38 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h3 className="font-bold text-blue-800 text-lg">Manage Room Data</h3>
-          <p className="text-blue-600 text-sm">
-            You have <strong>{stats.pendingBookings}</strong> pending requests to process in the bookings menu.
-          </p>
+      {stats.pendingBookings > 0 && (
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-blue-800 text-lg">Action Required</h3>
+            <p className="text-blue-600 text-sm">
+              You have <strong>{stats.pendingBookings}</strong> pending requests that need to be processed.
+            </p>
+          </div>
+          <Link 
+            to="/admin/bookings" 
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-md shadow-blue-200"
+          >
+            Manage Bookings <ArrowRight size={18} />
+          </Link>
         </div>
-        <Link 
-          to="/admin/bookings" 
-          className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-md shadow-blue-200"
-        >
-          Check Bookings <ArrowRight size={18} />
-        </Link>
-      </div>
+      )}
+      {stats.pendingBookings > 0 && (
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in duration-500">
+          <div>
+            <h3 className="font-bold text-blue-800 text-lg">Pending Approvals</h3>
+            <p className="text-blue-600 text-sm">
+              You have <strong>{stats.pendingBookings}</strong> pending requests that need your attention.
+            </p>
+          </div>
+          <Link 
+            to="/admin/bookings" 
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-md shadow-blue-200"
+          >
+            Review Bookings <ArrowRight size={18} />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

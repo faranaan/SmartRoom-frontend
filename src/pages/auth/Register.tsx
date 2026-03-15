@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { api } from "../../api/axios";
+import { register } from "../../services/authService";
 import { useNavigate, Link } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
-import { UserPlus, User, Lock, Briefcase, ChevronDown, Shield, Key } from "lucide-react";
+import toast from "react-hot-toast";
+import { User, Lock, Briefcase, ChevronDown, Key } from "lucide-react";
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('Mahasiswa');
-  const [adminKey, setAdminKey] = useState('');
+  const [registrationToken, setRegistrationToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -20,14 +20,19 @@ const Register = () => {
       return;
     }
 
-    if (role === 'Admin' && !adminKey) {
-      toast.error("Admin must enter the Secret Code!");
+    if (!registrationToken) {
+      toast.error("Campus Registration Token is required!");
       return;
     }
     setIsLoading(true);
 
     try {
-      await api.post('/Auth/register', {username, password, role, adminSecretKey: role === 'Admin' ? adminKey : undefined});
+      await register({
+        username,
+        password,
+        role,
+        registrationToken
+      });
 
       toast.success("Registration Successful! Please Login.");
 
@@ -35,7 +40,18 @@ const Register = () => {
         navigate('/login')
       }, 1500);
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || "Registration Failed.";
+      let errorMsg = "Registration Failed.";
+
+      if (error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        const firstKey = Object.keys(validationErrors)[0];
+        errorMsg = validationErrors[firstKey][0];
+      } else if (error.response?.data?.title) {
+        errorMsg = error.response.data.title;
+      } else if (typeof error.response?.data === 'string') {
+        errorMsg = error.response.data;
+      }
+      
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
@@ -85,19 +101,16 @@ const Register = () => {
                 <ChevronDown size={20} />
             </div>
           </div>
-          {role === 'Admin' && (
-            <div className="relative transition-all duration-500 ease-in-out">
-              <Key className="absolute left-3 top-3 text-red-400" size={20}/>
-              <input 
-                type="password"
-                placeholder="Admin Secret Code"
-                className="w-full pl-10 pr-4 py-3 border border-red-200 bg-red-50 rounded-xl focus:outline-none focus:ring-red-500 transition text-red-700 placeholder-red-300"
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)} 
-              />
-            </div>
-          )}
-
+          <div className="relative transition-all duration-500 ease-in-out">
+            <Key className="absolute left-3 top-3 text-blue-400" size={20}/>
+            <input 
+              type="text"
+              placeholder={role === 'Admin' ? "Admin Token (e.g. ADM-XXX)" : "Campus Token (e.g. MBR-XXX)"}
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-blue-500 transition text-gray-700 placeholder-gray-400"
+              value={registrationToken}
+              onChange={(e) => setRegistrationToken(e.target.value)} 
+            />
+          </div>
           <button
             type="submit"
             disabled={isLoading}

@@ -13,6 +13,11 @@ import RoomCatalog from "./pages/student/RoomCatalog";
 import MyBookings from "./pages/student/MyBookings";
 import ManageBookings from "./pages/admin/ManageBookings";
 import StudentDashboard from "./pages/student/Dashboard";
+import Profile from "./pages/user/Profile";
+import SuperAdminDashboard from "./pages/superadmin/Dashboard";
+import MasterData from "./pages/admin/MasterData";
+
+const ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
 const ProtectedRoute = ({
   children,
@@ -24,19 +29,22 @@ const ProtectedRoute = ({
   const { isAuthenticated, user, isLoading } = useAuth();
 
   if (isLoading) return null;
-
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  if (allowedRoles && !allowedRoles.includes(user?.role || "")) {
-    return (
-      <Navigate to={user?.role === "Admin" ? "/admin/dashboard" : "/student/dashboard"} />
-    );
+  const userRole = user?.[ROLE_CLAIM] || "";
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    if (userRole === "SuperAdmin") return <Navigate to="/superadmin/dashboard" replace />;
+    if (userRole === "Admin") return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/student/dashboard" replace />;
   }
 
   return children;
 };
 
 function App() {
+  const { user } = useAuth();
+  const userRole = user?.[ROLE_CLAIM] || "";
   return (
     <BrowserRouter>
       <Toaster
@@ -58,7 +66,7 @@ function App() {
         
         <Route
           element={
-            <ProtectedRoute allowedRoles={["Admin"]}>
+            <ProtectedRoute allowedRoles={["Admin", "SuperAdmin"]}>
               <Layout />
             </ProtectedRoute>
           }
@@ -66,9 +74,13 @@ function App() {
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/rooms" element={<Rooms />} />
           <Route path="/admin/bookings" element={<ManageBookings />} />
+          <Route path="/admin/profile" element={<Profile />} />
+          <Route path="/admin/master-data" element={<MasterData />} />
+          <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+          <Route path="/superadmin/profile" element={<Profile />} />
           <Route
             path="/dashboard"
-            element={<Navigate to="/admin/dashboard" replace />}
+            element={<Navigate to={userRole === "SuperAdmin" ? "/superadmin/dashboard" : "/admin/dashboard"} replace />}
           />
         </Route>
 
@@ -82,6 +94,7 @@ function App() {
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/browse" element={<RoomCatalog />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/student/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Navigate to="/student/dashboard" replace />}/>
         </Route>
       </Routes>
