@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { api } from "../api/axios";
 import { X, Save, LayoutTemplate, Building } from "lucide-react";
 import type { Room } from "../types/room";
+import { getBuildings, getRoomTypes } from "../services/masterDataService";
+import toast from "react-hot-toast";
 
 interface RoomModalProps {
     isOpen: boolean;
@@ -11,61 +13,87 @@ interface RoomModalProps {
 }
 
 const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) => {
+    const [buildings, setBuildings] = useState<any[]>([]);
+    const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         roomName: '',
         capacity: 0,
-        type: 'Classroom',
-        building: 'TowerA'
+        roomTypeId: '',
+        buildingId: ''
     });
-
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
 
     useEffect(() => {
-        if (isOpen) {
-            if(roomToEdit){
-                setFormData({
-                    roomName: roomToEdit.roomName,
-                    capacity: roomToEdit.capacity,
-                    type: roomToEdit.type as string,
-                    building: roomToEdit.building as string
-                });
-            } else {
-                setFormData({ roomName: '', capacity: 0, type: 'Classroom', building: 'TowerA' });
+        const fetchMasterData = async () => {
+            try {
+                const [bData, rtData] = await Promise.all([getBuildings(), getRoomTypes()]);
+                setBuildings(bData);
+                setRoomTypes(rtData);
+
+                if (!roomToEdit && bData.length > 0 && rtData.length > 0) {
+                    setFormData(prev => ({
+                        ...prev,
+                        buildingId: bData[0].id.toString(),
+                        roomTypeId: rtData[0].id.toString()
+                    }));
+                }
+            } catch (err) {
+                toast.error("Failed to load options");
             }
-            setError('');
+        };
+
+        if (isOpen) {
+            fetchMasterData();
         }
-    }, [isOpen, roomToEdit])
+    }, [isOpen, roomToEdit]);
+
+    useEffect(() => {
+        if (isOpen && roomToEdit) {
+            setFormData({
+                roomName: roomToEdit.roomName,
+                capacity: roomToEdit.capacity,
+                roomTypeId: (roomToEdit.roomType as any)?.id?.toString() || '',
+                buildingId: (roomToEdit.building as any)?.id?.toString() || ''
+            });
+        } else if (isOpen && !roomToEdit) {
+            setFormData({ roomName: '', capacity: 0, roomTypeId: '', buildingId: '' });
+        }
+    }, [isOpen, roomToEdit]);
 
     if (!isOpen) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
+        setFormData(prev => ({
+            ...prev,
             [name]: name === 'capacity' ? Number(value) : value
-        });
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
 
         try {
-            if(roomToEdit){
-                await api.put(`/Rooms/${roomToEdit.id}`, {
-                    id: roomToEdit.id,
-                    ...formData
-                });
+            const payload = {
+                roomName: formData.roomName,
+                capacity: formData.capacity,
+                roomTypeId: parseInt(formData.roomTypeId),
+                buildingId: parseInt(formData.buildingId)
+            };
+
+            if (roomToEdit) {
+                await api.put(`/Rooms/${roomToEdit.id}`, { id: roomToEdit.id, ...payload });
+                toast.success("Room updated successfully");
             } else {
-                await api.post('/Rooms', formData);
+                await api.post('/Rooms', payload);
+                toast.success("Room created successfully");
             }
 
             onSuccess();
             onClose();
         } catch (err: any) {
-            setError(err.response?.data || 'Failed to save room details.');
+            toast.error(err.response?.data || "Failed to save room");
         } finally {
             setIsLoading(false);
         }
@@ -82,12 +110,8 @@ const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) =
                         <X size={20} />
                     </button>
                 </div>
+
                 <div className="p-6">
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded border border-red-200">
-                            {error}
-                        </div>
-                    )}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
@@ -101,6 +125,7 @@ const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) =
                                 required 
                             />
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
                             <input 
@@ -113,21 +138,23 @@ const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) =
                                 required 
                             />
                         </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                                     <LayoutTemplate size={14} /> Type
                                 </label>
                                 <select 
-                                    name="type" 
-                                    value={formData.type}
+                                    name="roomTypeId" 
+                                    value={formData.roomTypeId}
                                     onChange={handleChange}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                    required
                                 >
-                                    <option value="Classroom">Classroom</option>
-                                    <option value="Laboratory">Laboratory</option>
-                                    <option value="MeetingRoom">Meeting Room</option>
-                                    <option value="Auditorium">Auditorium</option>
+                                    <option value="">Select Type</option>
+                                    {roomTypes.map(rt => (
+                                        <option key={rt.id} value={rt.id}>{rt.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -135,17 +162,20 @@ const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) =
                                     <Building size={14} /> Building
                                 </label>
                                 <select 
-                                    name="building" 
-                                    value={formData.building}
+                                    name="buildingId" 
+                                    value={formData.buildingId}
                                     onChange={handleChange}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                    required
                                 >
-                                    <option value="TowerA">Tower A</option>
-                                    <option value="TowerB">Tower B</option>
-                                    <option value="TowerC">Tower C</option>
+                                    <option value="">Select Building</option>
+                                    {buildings.map(b => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
+
                         <div className="flex gap-3 pt-4 border-t border-gray-200 mt-4">
                             <button
                                 type="button"
@@ -159,14 +189,14 @@ const RoomModal = ({ isOpen, onClose, onSuccess, roomToEdit }: RoomModalProps) =
                                 disabled={isLoading}
                                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex justify-center items-center gap-2"
                             >
-                                {isLoading ? 'Saving...' : <><Save size={18} /> {roomToEdit ? 'Update Room' : 'Save Room'}</>}
+                                {isLoading ? 'Saving...' : <><Save size={18} /> {roomToEdit ? 'Update' : 'Save'}</>}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default RoomModal;

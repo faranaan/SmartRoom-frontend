@@ -1,8 +1,17 @@
-export interface Room{
+export interface Room {
     id: number;
     roomName: string;
     capacity: number;
-    type: 'Classroom' | 'Laboratory' | 'MeetingRoom' | 'Auditorium';
-    building: 'TowerA' | 'TowerB' | 'TowerC';
     isAvailable: boolean;
+    roomTypeId: number;
+    buildingId: number;
+    roomType?: {
+        id: number;
+        name: string;
+    };
+    building?: {
+        id: number;
+        name: string;
+    };
+    type?: string; 
 }

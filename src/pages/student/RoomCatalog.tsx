@@ -3,8 +3,8 @@ import { api } from "../../api/axios";
 import type { Room } from "../../types/room";
 import { Users, MapPin, LayoutTemplate, Search, CalendarCheck, Info, ArrowUpDown, Filter } from "lucide-react";
 import BookingModal from "../../components/BookingModal";
-import SuccessModal from "../../components/SuccessModal";
 import RoomScheduleModal from "../../components/RoomScheduleModal";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const RoomCatalog = () => {
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -34,23 +34,18 @@ const RoomCatalog = () => {
         }
     };
 
-    const getRoomTypeName = (type: string) => {
-        switch (type) {
-            case "Classroom": return "Classroom";
-            case "Laboratory": return "Laboratory";
-            case "MeetingRoom": return "Meeting Room";
-            case "Auditorium": return "Auditorium";
-            default: return type;
+    const getRoomTypeName = (room: Room) => {
+        if (typeof room.roomType === 'object' && room.roomType !== null) {
+            return room.roomType.name;
         }
+        return (room as any).type || "Unknown Type";
     };
 
-    const getBuildingName = (building: string) => {
-        switch (building) {
-            case "TowerA": return "Tower A";
-            case "TowerB": return "Tower B";
-            case "TowerC": return "Tower C";
-            default: return building;
+    const getBuildingName = (room: Room) => {
+        if (typeof room.building === 'object' && room.building !== null) {
+            return room.building.name;
         }
+        return room.building || "Unknown Building";
     };
 
     const handleOpenBooking = (room: Room) => {
@@ -65,12 +60,18 @@ const RoomCatalog = () => {
 
     const handleBookingSucces = () => {
         setIsSuccessOpen(true);
+        fetchRooms(); 
     };
 
     const filteredRooms = rooms
         .filter((room) => {
-            const matchesSearch = room.roomName.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesType = filterType === 'All' || room.type === filterType;
+            const roomName = room.roomName.toLowerCase();
+            const search = searchTerm.toLowerCase();
+            const matchesSearch = roomName.includes(search);
+            
+            const typeValue = typeof room.roomType === 'object' ? room.roomType?.name : (room as any).type;
+            const matchesType = filterType === 'All' || typeValue === filterType;
+            
             return matchesSearch && matchesType;
         })
         .sort((a, b) => {
@@ -78,7 +79,9 @@ const RoomCatalog = () => {
             return b.capacity - a.capacity;
         });
 
-    const roomTypes = ['All', ...new Set(rooms.map(r => r.type))];
+    const roomTypes = ['All', ...new Set(rooms.map(r => 
+        typeof r.roomType === 'object' ? r.roomType?.name : (r as any).type
+    ).filter(Boolean))];
 
     return (
         <div className="space-y-6">
@@ -106,7 +109,7 @@ const RoomCatalog = () => {
                             className="pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 appearance-none cursor-pointer"
                         >
                             {roomTypes.map(type => (
-                                <option key={type} value={type}>{type === 'All' ? 'All Types' : getRoomTypeName(type)}</option>
+                                <option key={type} value={type}>{type}</option>
                             ))}
                         </select>
                     </div>
@@ -119,6 +122,7 @@ const RoomCatalog = () => {
                     </button>
                 </div>
             </div>
+
             {isLoading ? (
                 <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -152,11 +156,11 @@ const RoomCatalog = () => {
                                 <div className="space-y-2 mb-6 mt-4">
                                     <div className="flex items-center gap-2 text-gray-600 text-sm">
                                         <MapPin size={16} className="text-gray-400" />
-                                        <span>{getBuildingName(room.building)}</span>
+                                        <span>{getBuildingName(room)}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-600 text-sm">
                                         <LayoutTemplate size={16} className="text-gray-400" />
-                                        <span>{getRoomTypeName(room.type)}</span>
+                                        <span>{getRoomTypeName(room)}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-600 text-sm">
                                         <Users size={16} className="text-gray-400" />
@@ -205,11 +209,14 @@ const RoomCatalog = () => {
                 room={selectedRoom}
                 onSuccess={handleBookingSucces}
             />
-            <SuccessModal
+            <ConfirmModal
                 isOpen={isSuccessOpen}
                 onClose={() => setIsSuccessOpen(false)}
+                onConfirm={() => setIsSuccessOpen(false)} 
+                variant="success"
                 title="Booking Successful!"
                 message="Your request has been submitted. You can monitor the approval status in your dashboard."
+                confirmText="Got it!"
             />
         </div>
     );
