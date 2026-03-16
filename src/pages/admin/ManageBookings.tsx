@@ -29,10 +29,8 @@ const ManageBookings = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [targetId, setTargetId] = useState<number | null>(null);
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
-
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
@@ -63,7 +61,9 @@ const ManageBookings = () => {
         if (!targetId) return;
         setIsLoading(true);
         try {
-            await api.put(`/Bookings/${targetId}/status`, { status: 1 });
+            await api.put(`/Bookings/${targetId}/status`, { status: 1 }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
             setIsConfirmOpen(false);
             toast.success("Booking Approved!");
             fetchBookings();

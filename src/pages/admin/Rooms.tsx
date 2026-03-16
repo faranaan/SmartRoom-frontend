@@ -26,6 +26,7 @@ const Rooms = () => {
     setIsLoading(true);
     try {
       const response = await api.get("/Rooms");
+      console.log("Raw Data Rooms:", response.data);
       setRooms(response.data);
     } catch (error) {
       console.error("Fetch error:", error);
